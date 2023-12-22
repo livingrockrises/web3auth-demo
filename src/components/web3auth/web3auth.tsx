@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react"
 import { sepolia, useAccount, useConnect, useDisconnect, useWalletClient } from "wagmi"
 import { usePublicClient } from "wagmi"
 import { Loader } from "@/components/loader"
-import { SmartAccount, signerToSafeSmartAccount } from "permissionless/accounts"
+import { SmartAccount, signerToBiconomySmartAccount } from "permissionless/accounts"
 import { Address, Chain, Hash, Transport, http } from "viem"
 import { CustomSigner } from "./customSigner"
 import { SmartAccountClient, createSmartAccountClient } from "permissionless"
@@ -70,20 +70,25 @@ export const Web3AuthFlow = () => {
         ;(async () => {
             if (isConnected && walletClient && publicClient) {
                 const customSigner = new CustomSigner(walletClient)
+                // console.log("EOA address ", (await walletClient.getAddresses())[0])
 
-                const safeSmartAccountClient = await signerToSafeSmartAccount(
+                // @ts-ignore
+                // const pk = await walletClient.request({method: 'eth_private_key'})
+
+                const biconomySmartAccountClient = await signerToBiconomySmartAccount(
                     publicClient,
                     {
                         entryPoint: process.env
                             .NEXT_PUBLIC_ENTRYPOINT! as Address,
                         signer: customSigner,
-                        safeVersion: "1.4.1",
-                        saltNonce: BigInt(0)
+                        index: BigInt(0)
                     }
                 )
 
+                console.log('smart account address ', biconomySmartAccountClient.address)
+
                 const smartAccountClient = createSmartAccountClient({
-                    account: safeSmartAccountClient,
+                    account: biconomySmartAccountClient,
                     chain: sepolia,
                     transport: http(process.env.NEXT_PUBLIC_BUNDLER_RPC_HOST!),
                     sponsorUserOperation: pimlicoPaymaster.sponsorUserOperation
